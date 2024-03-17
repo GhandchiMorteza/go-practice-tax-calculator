@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"example.com/price-calculator/data"
+	"example.com/price-calculator/storage"
 	"example.com/price-calculator/tax"
 )
 
@@ -17,9 +18,14 @@ func main() {
 		return
 	}
 
-	for _, taxRate := range taxRates {
-		priceJob := tax.NewTaxIncludedPriceJob(taxRate, prices)
-		priceJob.Process()
-	}
+	for _, rate := range taxRates {
+		job := tax.NewTaxIncludedPriceJob(rate, prices)
+		job.Process()
 
+		fileName := fmt.Sprintf("result_%.0f.json", rate*100)
+		if err := storage.SaveToJSON(job.TaxIncludedPrices, fileName); err != nil {
+			fmt.Printf("Error saving results to JSON: %v\n", err)
+			return
+		}
+	}
 }
