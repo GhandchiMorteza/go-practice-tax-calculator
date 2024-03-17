@@ -1,6 +1,11 @@
 package prices
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+)
 
 type TaxIncludedPriceJob struct {
 	TaxRate           float64
@@ -9,18 +14,46 @@ type TaxIncludedPriceJob struct {
 }
 
 func (job TaxIncludedPriceJob) Process() {
-	result := map[string]float64{}
+	result := map[string]string{}
 
 	for _, price := range job.InputPrices {
-		result[fmt.Sprintf("%.2f", price)] = price * (1 + job.TaxRate)
+		TaxIncludedPrice := price * (1 + job.TaxRate)
+		result[fmt.Sprintf("%.2f", price)] = fmt.Sprintf("%.2f", TaxIncludedPrice)
 	}
 
 	fmt.Println(result)
 }
-
-func NewTaxIncludedPriceJob(taxRate float64) *TaxIncludedPriceJob {
-	return &TaxIncludedPriceJob{
-		InputPrices: []float64{10, 20, 30},
-		TaxRate:     taxRate,
+func loadingData() ([]float64, error) {
+	file, err := os.Open("prices/prices.txt")
+	if err != nil {
+		return nil, fmt.Errorf("error opening the file: %w", err)
 	}
+	defer file.Close()
+
+	var floats []float64
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		f, err := strconv.ParseFloat(line, 64)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing float from line '%s': %w", line, err)
+		}
+		floats = append(floats, f)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error scanning file: %w", err)
+	}
+
+	return floats, nil
+}
+
+func NewTaxIncludedPriceJob(taxRate float64) (*TaxIncludedPriceJob, error) {
+	prices, err := loadingData()
+	if err != nil {
+		return nil, err
+	}
+	return &TaxIncludedPriceJob{
+		InputPrices: prices,
+		TaxRate:     taxRate,
+	}, nil
 }
