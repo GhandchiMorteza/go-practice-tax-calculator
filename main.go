@@ -23,7 +23,7 @@ func main() {
 		job.Process()
 
 		fileName := fmt.Sprintf("result_%.0f.json", rate*100)
-		if err := storage.SaveToJSON(job.TaxIncludedPrices, fileName); err != nil {
+		if err := storage.SaveToJSON(job, fileName); err != nil {
 			fmt.Printf("Error saving results to JSON: %v\n", err)
 			return
 		}
